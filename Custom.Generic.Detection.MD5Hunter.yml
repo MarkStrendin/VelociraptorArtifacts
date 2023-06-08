@@ -1,0 +1,21 @@
+name: Custom.Generic.Detection.MD5Hunter
+author: "Mark Strendin"
+description: |
+    This artifact searches for files with the given MD5 hash.
+  
+parameters:
+  - name: TargetGlob
+    description: Glob to target.
+    default: "C:\\**\\*"
+    
+  - name: TargetMD5Hash
+    description: MD5 hash to hunt for.
+    default:
+
+sources:
+  - query: |
+      LET all_file_hashes = SELECT FullPath,hash(path=FullPath) as Hash
+        FROM glob(globs=TargetGlob)
+        WHERE NOT IsDir AND NOT IsLink
+    
+      SELECT FullPath, Hash FROM all_file_hashes WHERE ( Hash.MD5 = TargetMD5Hash )
