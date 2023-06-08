@@ -1,0 +1,21 @@
+name: Custom.Generic.Detection.SHA256Hunter
+author: "Mark Strendin"
+description: |
+    This artifact searches for files with the given SHA256 hash.
+  
+parameters:
+  - name: TargetGlob
+    description: Glob to target.
+    default: "C:\\**\\*"
+    
+  - name: TargetSHA256Hash
+    description: SHA256 hash to hunt for.
+    default:
+
+sources:
+  - query: |
+      LET all_file_hashes = SELECT FullPath,hash(path=FullPath) as Hash
+        FROM glob(globs=TargetGlob)
+        WHERE NOT IsDir AND NOT IsLink
+    
+      SELECT FullPath, Hash FROM all_file_hashes WHERE ( Hash.SHA256 = TargetSHA256Hash )
