@@ -1,4 +1,5 @@
 name: Custom.Generic.Collectors.Windows.CollectBrowserHistory.AllUsers
+author: "Mark Strendin"
 description: |
    Collects browser history databases for all users.
 
