@@ -1,0 +1,27 @@
+name: Custom.Generic.Collectors.Windows.CollectBrowserHistory.AllUsers
+description: |
+   Collects browser history databases for all users.
+
+sources:
+    - name: Find history stores
+      query: |
+        LET found_files = SELECT FullPath, Size,
+                            Ctime AS Created,
+                            Mtime AS Modified,
+                            Atime AS LastAccessed 
+                          FROM glob(globs=['C:\\Users\\*\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\History','C:\\Users\\*\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\History','C:\\Users\\*\\AppData\\Roaming\\Mozilla\\Firefox\\Profiles\\*\\places.sqlite'], accessor='lazy_ntfs')
+
+        LET uploaded_files = SELECT * FROM foreach(row=found_files,
+          workers=30,
+          query={
+              SELECT Created, LastAccessed, Modified, FullPath, Size,
+                 upload(file=FullPath, name=FullPath,
+                        mtime=Modified) AS Upload
+              FROM scope()
+          })
+
+        -- Separate the hashes into their own column.
+        SELECT now() AS CopiedOnTimestamp, FullPath, Upload.Path AS DestinationFile,
+                 Size AS FileSize, Upload.sha256 AS FullPathSha256,
+                 Created, Modified, LastAccessed
+          FROM uploaded_files
